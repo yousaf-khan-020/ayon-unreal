@@ -275,7 +275,8 @@ def start_rendering():
 
             settings = job_config.find_or_add_setting_by_class(
                 unreal.MoviePipelineOutputSetting)
-            settings.output_resolution = unreal.IntPoint(1920, 1080)
+            #settings.output_resolution = unreal.IntPoint(1920, 1080)
+            #settings.output_resolution = settings.output_resolution
             settings.custom_start_frame = render_setting.get("frame_range")[0]
             settings.custom_end_frame = render_setting.get("frame_range")[1]
             settings.use_custom_playback_range = True

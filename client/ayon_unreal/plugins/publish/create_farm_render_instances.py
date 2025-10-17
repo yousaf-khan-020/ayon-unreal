@@ -4,6 +4,7 @@ import unreal
 
 import pyblish.api
 
+from ayon_core.pipeline import get_current_project_name, Anatomy
 from ayon_core.pipeline import publish, PublishError
 from ayon_core.pipeline.publish import RenderInstance
 
@@ -147,6 +148,14 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
                 unreal.MoviePipelineOutputSetting
             )
 
+            #project = get_current_project_name()
+            #anatomy = Anatomy(project)
+            #renders_path = anatomy.roots['renders']
+            
+            #output_settings.output_directory = f"{renders_path}/{sequence_name}"
+            #output_settings.output_directory = renders_path
+            #output_settings.output_directory = unreal.DirectoryPath(path=f"{renders_path}")
+            
             resolution = output_settings.output_resolution
             resolution_width = resolution.x
             resolution_height = resolution.y
@@ -330,7 +339,9 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
         start = render_instance.frameStart
         end = render_instance.frameEnd
 
-        base_dir = self._get_output_dir(render_instance)
+        sequence_name = render_instance.file_names[0].split(".")[0]
+        base_dir = self._get_output_dir(render_instance, sequence_name)
+        
         expected_files = []
         for file_name in render_instance.file_names:
             if "#" in file_name:
@@ -345,7 +356,7 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
 
         return expected_files
 
-    def _get_output_dir(self, render_instance):
+    def _get_output_dir(self, render_instance, sequence_name):
         """
             Returns dir path of rendered files, used in submit_publish_job
             for metadata.json location.
@@ -357,10 +368,18 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
         Returns:
             (str): absolute path to rendered files
         """
+        # render to renders path in anatomy
+        project = get_current_project_name()
+        anatomy = Anatomy(project)
+        renders_path = anatomy.roots['renders']
+        
+        output_dir = f"{renders_path}/{sequence_name}"
+        #output_dir = f"{renders_path}"
+        
         # render to folder of project
-        output_dir = render_instance.output_settings.output_directory.path
-        base_dir = os.path.dirname(render_instance.source)
-        output_dir = output_dir.replace("{project_dir}", base_dir)
+        #output_dir = render_instance.output_settings.output_directory.path
+        #base_dir = os.path.dirname(render_instance.source)
+        #output_dir = output_dir.replace("{project_dir}", base_dir)
 
         return output_dir
 
