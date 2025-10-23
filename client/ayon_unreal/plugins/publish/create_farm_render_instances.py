@@ -161,7 +161,8 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
             resolution_height = resolution.y
 
             output_fps = output_settings.output_frame_rate
-            fps = f"{output_fps.denominator}.{output_fps.numerator}"
+            #fps = f"{output_fps.denominator}.{output_fps.numerator}"
+            fps = f"{output_fps.numerator}"
 
             instance_families = inst.data.get("families", [])
             product_name = inst.data["productName"]
@@ -223,7 +224,7 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
             )
             if not job:
                 raise PublishError(
-                    f"Cannot find job with sequence {inst.data['sequence']}"
+                    f"Cannot find job with sequence {inst.data['sequence']} in render queue"
                 )
 
             # current frame range - might be different from created

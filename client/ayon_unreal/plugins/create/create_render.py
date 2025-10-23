@@ -55,6 +55,62 @@ class CreateRender(UnrealAssetCreator):
             instance,
             instance_data,
             pre_create_data)
+            
+    def create_without_master_sequence(
+            self, product_name, instance_data, pre_create_data
+    ):
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+        sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
+        selection = [
+            a.get_path_name() for a in sel_objects
+            if a.get_class().get_name() == "LevelSequence"]
+
+        if len(selection) == 0:
+            raise RuntimeError("Please select at least one Level Sequence.")
+
+        seq_data = None
+
+        for sel in selection:
+            selected_asset = ar.get_asset_by_object_path(sel).get_asset()
+            selected_asset_path = selected_asset.get_path_name()
+
+            # Check if the selected asset is a level sequence asset.
+            if selected_asset.get_class().get_name() != "LevelSequence":
+                unreal.log_warning(
+                    f"Skipping {selected_asset.get_name()}. It isn't a Level "
+                    "Sequence.")
+            else:
+                search_path = Path(selected_asset_path).parent.as_posix()
+                
+                try:
+                    master_seq = selected_asset_path
+                    ar_filter = unreal.ARFilter(
+                        class_names=["World"],
+                        package_paths=[search_path],
+                        recursive_paths=False)
+                    levels = ar.get_assets(ar_filter)
+                    master_lvl = levels[0].get_asset().get_path_name()
+                except IndexError:
+                    raise RuntimeError(
+                        "Could not find the master level for the selected sequence.")
+                        
+                master_seq_data = {
+                    "sequence": selected_asset,
+                    "output": f"{selected_asset.get_name()}",
+                    "frame_range": (
+                        selected_asset.get_playback_start(),
+                        selected_asset.get_playback_end())}
+                        
+                seq_data = master_seq_data
+
+                # If we didn't find the selected asset, we don't create the
+                # instance.
+                if not seq_data:
+                    unreal.log_warning(f"Skipping {selected_asset.get_name()}. It isn't a selected sequence.")
+                    continue
+                    
+                self.create_instance(instance_data, product_name, pre_create_data, selected_asset_path, master_seq, master_lvl, seq_data)
 
 
     def create_with_new_sequence(
@@ -252,12 +308,15 @@ class CreateRender(UnrealAssetCreator):
         if not instance_data.get("creator_attributes"):
             instance_data["creator_attributes"] = {}
         instance_data["creator_attributes"]["render_target"] = pre_create_data.get("render_target")
-        if pre_create_data.get("create_seq"):
+        
+        self.create_without_master_sequence(product_name, instance_data, pre_create_data)
+        
+        '''if pre_create_data.get("create_seq"):
             self.create_with_new_sequence(
                 product_name, instance_data, pre_create_data)
         else:
             self.create_from_existing_sequence(
-                product_name, instance_data, pre_create_data)
+                product_name, instance_data, pre_create_data)'''
 
     def get_pre_create_attr_defs(self):
         rendering_targets = {
@@ -315,7 +374,7 @@ class CreateRender(UnrealAssetCreator):
                 "render_target",
                 items=rendering_targets,
                 label="Render target",
-                default="local",
+                default="farm",
             ),
             EnumDef(
                 "render_preset",
