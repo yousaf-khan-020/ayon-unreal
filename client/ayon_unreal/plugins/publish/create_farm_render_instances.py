@@ -27,6 +27,7 @@ class UnrealRenderInstance(RenderInstance):
     publish_attributes = attr.ib(default={})
     file_names = attr.ib(default=[])
     master_level = attr.ib(default=None)
+    master_sequence = attr.ib(default=None)
     config_path = attr.ib(default=None)
     app_version = attr.ib(default=None)
     output_settings = attr.ib(default=None)
@@ -123,7 +124,7 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
         output_ext_from_settings = render_settings["render_format"]
 
         for inst in context:
-            render_preset =inst.data.get("creator_attributes", {}).get(
+            render_preset = inst.data.get("creator_attributes", {}).get(
                 "render_preset"
             )
             config_path, config = get_render_config(
@@ -137,6 +138,10 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
             config = set_output_extension_from_settings(
                 output_ext_from_settings, config
             )
+            
+            #render_level = inst.data.get("creator_attributes", {}).get(
+            #    "render_level"
+            #)
 
             ext = self._get_ext_from_config(config)
             if not ext:
@@ -147,6 +152,8 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
             output_settings = config.find_or_add_setting_by_class(
                 unreal.MoviePipelineOutputSetting
             )
+            
+            config_location_path = str(config_path) + "/" + render_preset #+ "." + render_preset
 
             #project = get_current_project_name()
             #anatomy = Anatomy(project)
@@ -160,9 +167,9 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
             resolution_width = resolution.x
             resolution_height = resolution.y
 
-            output_fps = output_settings.output_frame_rate
+            #---output_fps = output_settings.output_frame_rate
             #fps = f"{output_fps.denominator}.{output_fps.numerator}"
-            fps = f"{output_fps.numerator}"
+            #---fps = f"{output_fps.numerator}"
 
             instance_families = inst.data.get("families", [])
             product_name = inst.data["productName"]
@@ -212,6 +219,13 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
                         get_asset())
             if not sequence:
                 raise PublishError(f"Cannot find {inst.data['sequence']}")
+                
+            # Get the display rate (FrameRate struct)
+            frame_rate = sequence.get_display_rate()
+
+            # Extract numerator and denominator
+            fps_number = frame_rate.numerator / frame_rate.denominator
+            fps = f"{fps_number}"
 
             # Get current job
             job = next(
@@ -289,7 +303,9 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
                 output_settings=output_settings,
                 config_path=config_path,
                 master_level=inst.data["master_level"],
-                render_queue_path=render_queue_path,
+                master_sequence=inst.data["master_sequence"],
+                #render_queue_path=render_queue_path,
+                render_queue_path=config_location_path,
                 deadline=inst.data.get("deadline"),
             )
             new_instance.farm = True

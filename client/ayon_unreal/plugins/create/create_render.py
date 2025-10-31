@@ -81,16 +81,21 @@ class CreateRender(UnrealAssetCreator):
                     f"Skipping {selected_asset.get_name()}. It isn't a Level "
                     "Sequence.")
             else:
-                search_path = Path(selected_asset_path).parent.as_posix()
+                #search_path = Path(selected_asset_path).parent.as_posix()
                 
                 try:
                     master_seq = selected_asset_path
-                    ar_filter = unreal.ARFilter(
+                    level_name = pre_create_data.get("render_level")
+                    '''ar_filter = unreal.ARFilter(
                         class_names=["World"],
                         package_paths=[search_path],
                         recursive_paths=False)
                     levels = ar.get_assets(ar_filter)
-                    master_lvl = levels[0].get_asset().get_path_name()
+                    master_lvl = levels[0].get_asset().get_path_name()'''
+                    unreal.log(f"Level Name: {level_name}")
+                    level_path, level = self.get_level_from_level_name(level_name)
+                    master_lvl = level.get_path_name()
+                    unreal.log(f"Level: {master_lvl} .... and Level Path: {level_path}")
                 except IndexError:
                     raise RuntimeError(
                         "Could not find the master level for the selected sequence.")
@@ -104,8 +109,7 @@ class CreateRender(UnrealAssetCreator):
                         
                 seq_data = master_seq_data
 
-                # If we didn't find the selected asset, we don't create the
-                # instance.
+                # If we didn't find the selected asset, we don't create the instance.
                 if not seq_data:
                     unreal.log_warning(f"Skipping {selected_asset.get_name()}. It isn't a selected sequence.")
                     continue
@@ -323,6 +327,9 @@ class CreateRender(UnrealAssetCreator):
             "local": "Local machine rendering",
             "farm": "Farm rendering",
         }
+        
+        levels = self.get_all_level_names()
+        
         return [
             UILabelDef(
                 "Select a Level Sequence to render or create a new one."
@@ -337,7 +344,10 @@ class CreateRender(UnrealAssetCreator):
                 "level will be saved and a new Master Level will be created."
             ),
             EnumDef(
-                "render_target", items=rendering_targets, label="Render target"
+                "render_target", items=rendering_targets, label="Render target", default="farm",
+            ),
+            EnumDef(
+                "render_level", items=levels, label="Render Level",
             ),
             NumberDef(
                 "start_frame",
@@ -368,6 +378,7 @@ class CreateRender(UnrealAssetCreator):
         }
 
         render_presets = self.get_render_presets()
+        #levels = self.get_all_level_names()
 
         return [
             EnumDef(
@@ -381,6 +392,11 @@ class CreateRender(UnrealAssetCreator):
                 items=render_presets,
                 label="Render Preset",
             ),
+            #EnumDef(
+            #    "render_level",
+            #    items=levels,
+            #    label="Render Level",
+            #),
             BoolDef("review", label="Generate review", default=True),
         ]
 
@@ -391,7 +407,7 @@ class CreateRender(UnrealAssetCreator):
             list: List of render preset names.
         """
         all_assets = unreal.EditorAssetLibrary.list_assets(
-            "/Game/Ayon",
+            "/Game",
             recursive=True,
             include_folder=True,
         )
@@ -412,6 +428,40 @@ class CreateRender(UnrealAssetCreator):
         for preset in render_presets:
             self.log.debug(f" - {preset}")
         return render_presets
+        
+    def get_all_level_names(self) -> list[str]:
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+        ar_filter = unreal.ARFilter(
+            class_names=["World"],
+            package_paths=["/Game"],
+            recursive_paths=True)
+        levels = ar.get_assets(ar_filter)
+        level_names = [asset.asset_name for asset in levels]
+        if not level_names:
+            raise CreatorError("No levels found in the project")
+            
+        self.log.debug("Adding the following levels:")
+        for level_name in level_names:
+            self.log.debug(f" - {level_name}")
+        return level_names
+        
+    def get_level_from_level_name(self, level_name: str):
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+        level_obj = None
+        asset_filter = unreal.ARFilter(
+            class_names=["World"],
+            package_paths=["/Game"],
+            recursive_paths=True,
+        )
+        levels = ar.get_assets(asset_filter)
+        for level in levels:
+            if level.asset_name == level_name:
+                level_obj = level.get_asset()
+                level_path = level.package_path
+                break       
+        if level_obj:
+            unreal.log(f"Using level: {level_name}")
+        return level_path, level_obj
 
     def _on_value_changed(self, event):
         for changed_item in event["changes"]:
