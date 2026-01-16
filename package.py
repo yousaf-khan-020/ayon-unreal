@@ -1,6 +1,6 @@
 name = "unreal"
 title = "Unreal"
-version = "0.2.12+dev.3"
+version = "0.2.12+dev.4"
 app_host_name = "unreal"
 client_dir = "ayon_unreal"
 
