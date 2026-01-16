@@ -41,7 +41,8 @@ AYON_ROOT_DIR = "/Game/Ayon"
 AYON_ASSET_DIR = "/Game/Ayon/Assets"
 CONTEXT_CONTAINER = "Ayon/context.json"
 UNREAL_VERSION = semver.VersionInfo(
-    *os.getenv("AYON_UNREAL_VERSION", "5.6.1").split(".")      
+    #*os.getenv("AYON_UNREAL_VERSION", "5.7.1").split(".")
+    *os.getenv("UNREAL_VERSION", "5.7.1").split(".")
 )
 
 PLUGINS_DIR = os.path.join(UNREAL_ADDON_ROOT, "plugins")
