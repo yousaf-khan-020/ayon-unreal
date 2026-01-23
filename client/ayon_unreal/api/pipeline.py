@@ -36,15 +36,19 @@ import unreal  # noqa
 # Rename to Ayon once parent module renames
 logger = logging.getLogger("ayon_core.hosts.unreal")
 
+# AYON_APP_NAME has value like "unreal/5-7"
+APP_NAME = os.getenv("AYON_APP_NAME") 
+ENGINE_VERSION = f"{APP_NAME.split('/')[-1].replace('-', '.')}.1"
+
 AYON_CONTAINERS = "AyonContainers"
 AYON_ROOT_DIR = "/Game/Ayon"
 AYON_ASSET_DIR = "/Game/Ayon/Assets"
 CONTEXT_CONTAINER = "Ayon/context.json"
-UNREAL_VERSION = semver.VersionInfo(
+#UNREAL_VERSION = semver.VersionInfo(
     #*os.getenv("AYON_UNREAL_VERSION", "5.7.1").split(".")
-    *os.getenv("UNREAL_VERSION", "5.7.1").split(".")
-)
-
+    #*os.getenv("UNREAL_VERSION", "5.7.1").split(".")
+#)
+UNREAL_VERSION = semver.VersionInfo.parse(ENGINE_VERSION)
 PLUGINS_DIR = os.path.join(UNREAL_ADDON_ROOT, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")

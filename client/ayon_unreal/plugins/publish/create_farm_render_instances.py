@@ -170,7 +170,8 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
             #---output_fps = output_settings.output_frame_rate
             #fps = f"{output_fps.denominator}.{output_fps.numerator}"
             #---fps = f"{output_fps.numerator}"
-
+            
+            allowed_families_list = ["render.farm"]
             instance_families = inst.data.get("families", [])
             product_name = inst.data["productName"]
 
@@ -184,6 +185,9 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
             # skip if local render instances
             if "render.local" in instance_families:
                 continue
+                
+            if "render.local_machine" in instance_families:
+                allowed_families_list.append("render.local_machine")
 
             if not inst.data.get("farm", False):
                 self.log.info("Skipping local render instance")
@@ -273,7 +277,8 @@ class CreateFarmRenderInstances(publish.AbstractCollectRender):
 
             new_instance = UnrealRenderInstance(
                 family="render",
-                families=["render.farm"],
+                #families=["render.farm"],
+                families=allowed_families_list,
                 version=version,
                 time="",
                 source=current_file,

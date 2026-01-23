@@ -22,7 +22,7 @@ from ayon_core.lib import (
     EnumDef
 )
 
-
+allowed_classes = {"LevelSequence", "CineAssembly"}
 class CreateRender(UnrealAssetCreator):
     """Create instance for sequence for rendering"""
 
@@ -65,7 +65,7 @@ class CreateRender(UnrealAssetCreator):
         sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
         selection = [
             a.get_path_name() for a in sel_objects
-            if a.get_class().get_name() == "LevelSequence"]
+            if a.get_class().get_name() in allowed_classes]
 
         if len(selection) == 0:
             raise RuntimeError("Please select at least one Level Sequence.")
@@ -77,7 +77,7 @@ class CreateRender(UnrealAssetCreator):
             selected_asset_path = selected_asset.get_path_name()
 
             # Check if the selected asset is a level sequence asset.
-            if selected_asset.get_class().get_name() != "LevelSequence":
+            if selected_asset.get_class().get_name() not in allowed_classes:
                 unreal.log_warning(
                     f"Skipping {selected_asset.get_name()}. It isn't a Level "
                     "Sequence.")
@@ -325,7 +325,8 @@ class CreateRender(UnrealAssetCreator):
 
     def get_pre_create_attr_defs(self):
         rendering_targets = {
-            "local": "Local machine rendering",
+            #"local": "Local machine rendering",
+            "local_machine": "Local machine rendering",
             "farm": "Farm rendering",
         }
         
@@ -374,7 +375,8 @@ class CreateRender(UnrealAssetCreator):
 
     def get_instance_attr_defs(self):
         rendering_targets = {
-            "local": "Local machine rendering",
+            #"local": "Local machine rendering",
+            "local_machine": "Local machine rendering",
             "farm": "Farm rendering",
         }
 

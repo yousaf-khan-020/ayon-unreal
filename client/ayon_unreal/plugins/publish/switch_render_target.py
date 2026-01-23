@@ -16,6 +16,12 @@ class SwitchRenderTargets(pyblish.api.InstancePlugin):
             instance.data["families"].append("render.farm")
             instance.data["farm"] = True
             return
+        elif render_target == "local_machine":
+            self.log.debug("Rendering on local machine")
+            instance.data["families"].append("render.farm")
+            instance.data["families"].append("render.local_machine")
+            instance.data["farm"] = True
+            return
 
         self.log.debug("Using locally renderer files")
         instance.data["families"].append("render.local")
