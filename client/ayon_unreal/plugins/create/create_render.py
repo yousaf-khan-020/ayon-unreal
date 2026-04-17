@@ -409,7 +409,7 @@ class CreateRender(UnrealAssetCreator):
         Returns:
             list: List of render preset names.
         """
-        all_assets = unreal.EditorAssetLibrary.list_assets(
+        """all_assets = unreal.EditorAssetLibrary.list_assets(
             "/Game",
             recursive=True,
             include_folder=True,
@@ -422,8 +422,12 @@ class CreateRender(UnrealAssetCreator):
                 continue
 
             if isinstance(_uasset, unreal.MoviePipelinePrimaryConfig):
-                render_presets.append(_uasset.get_name())
-
+                render_presets.append(_uasset.get_name())"""
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+        class_path = unreal.TopLevelAssetPath("/Script/MovieRenderPipelineCore", "MoviePipelinePrimaryConfig")
+        assets = ar.get_assets_by_class(class_path)
+        render_presets = [str(asset.asset_name) for asset in assets]
+        
         if not render_presets:
             raise CreatorError("No render presets found in the project")
 
@@ -434,11 +438,12 @@ class CreateRender(UnrealAssetCreator):
         
     def get_all_level_names(self) -> list[str]:
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
-        ar_filter = unreal.ARFilter(
-            class_names=["World"],
-            package_paths=["/Game"],
-            recursive_paths=True)
-        levels = ar.get_assets(ar_filter)
+        #ar_filter = unreal.ARFilter(
+        #    class_names=["World"],
+        #    package_paths=["/Game"],
+        #    recursive_paths=True)
+        class_path = unreal.TopLevelAssetPath("/Script/Engine", "World")
+        levels = ar.get_assets_by_class(class_path)
         level_names = [asset.asset_name for asset in levels]
         if not level_names:
             raise CreatorError("No levels found in the project")
@@ -450,13 +455,16 @@ class CreateRender(UnrealAssetCreator):
         
     def get_level_from_level_name(self, level_name: str):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
+        #asset_filter = unreal.ARFilter(
+        #    class_names=["World"],
+        #    package_paths=["/Game"],
+        #    recursive_paths=True,
+        #)
+        #levels = ar.get_assets(asset_filter)
+        class_path = unreal.TopLevelAssetPath("/Script/Engine", "World")
+        levels = ar.get_assets_by_class(class_path)
         level_obj = None
-        asset_filter = unreal.ARFilter(
-            class_names=["World"],
-            package_paths=["/Game"],
-            recursive_paths=True,
-        )
-        levels = ar.get_assets(asset_filter)
+        level_path = None
         for level in levels:
             if level.asset_name == level_name:
                 level_obj = level.get_asset()
